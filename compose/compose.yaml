@@ -18,29 +18,32 @@ services:
       - "443:8443"
     volumes: &appvolumes
       - ~/.composer:/var/www/.composer:cached
-      - ~/.ssh/id_rsa:/var/www/.ssh/id_rsa:cached
-      - ~/.ssh/known_hosts:/var/www/.ssh/known_hosts:cached
+#      - ~/.ssh/id_rsa:/var/www/.ssh/id_rsa:cached
+#      - ~/.ssh/known_hosts:/var/www/.ssh/known_hosts:cached
       - appdata:/var/www/html
       - sockdata:/sock
       - ssldata:/etc/nginx/certs
-    #extra_hosts: &appextrahosts
+      - ./ssh:/var/www/.ssh:cached
+    extra_hosts: &appextrahosts
       ## Selenium support, replace "magento.test" with URL of your site
       #- "magento.test:172.17.0.1"
       ## Linux, uncomment for Xdebug capabilities:
-      #- "host.docker.internal:host-gateway"
+      - "host.docker.internal:host-gateway"
 
   phpfpm:
-    image: markoshust/magento-php:8.3-fpm-3
+    image: markoshust/magento-php:8.1-fpm-5
     volumes: *appvolumes
     env_file: env/phpfpm.env
-    #extra_hosts: *appextrahosts
+    extra_hosts: *appextrahosts
 
   db:
-    image: mariadb:10.6
+    image: mariadb:10.5
     command:
       --max_allowed_packet=64M
       --optimizer_use_condition_selectivity=1
       --optimizer_switch="rowid_filter=off"
+      --innodb_log_file_size=512M 
+      --innodb_strict_mode=0
     ports:
       - "3306:3306"
     env_file: env/db.env
@@ -67,7 +70,7 @@ services:
       - "6379:6379"
 
   opensearch:
-    image: markoshust/magento-opensearch:2.12-0
+    image: markoshust/magento-opensearch:1.2-0
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -104,11 +107,9 @@ services:
   #    #- "ES_JAVA_OPTS=-Xms1g -Xmx1g"
   #    ## Uncomment to increase the virtual memory map count
   #    #- "max_map_count=262144"
-  #    ## Uncomment the line below if ElasticSearch fails to start and stops after ~150 seconds with the error "container for service "elasticsearch" is unhealthy".
-  #    #- "xpack.security.enabled=false"
 
   rabbitmq:
-    image: markoshust/magento-rabbitmq:3.13-0
+    image: markoshust/magento-rabbitmq:3.12-0
     ports:
       - "15672:15672"
       - "5672:5672"
